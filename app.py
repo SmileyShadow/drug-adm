@@ -1,10 +1,9 @@
 import streamlit as st
 import pandas as pd
 
-# Load your data (replace 'your_formulary_file.csv' with your actual file name)
+# Load the data (formulary.csv) into the app
 def load_data():
-    # Replace with your actual file path or URL on GitHub
-    df = pd.read_csv('your_formulary_file.csv')  # Example for CSV file
+    df = pd.read_csv('formulary.csv')
     return df
 
 # Display drug details
@@ -20,16 +19,14 @@ def display_drug_info(drug_name, df):
 
 # Main function
 def main():
-    # Title and description
     st.title("Drug Administration Guide")
     st.markdown("Search for a drug to get key information about its administration and indications.")
     
-    # Load data
-    df = load_data()
+    df = load_data()  # Load the CSV file containing the drug data
     
-    # Drug search input
+    # Search functionality
     drug_name = st.text_input("Enter Drug Name:")
-
+    
     if drug_name:
         display_drug_info(drug_name, df)
 
