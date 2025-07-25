@@ -1,28 +1,43 @@
 import fitz  # PyMuPDF
 import re
 import pandas as pd
+import os
 
 # Function to extract text from the PDF
 def extract_text_from_pdf(pdf_path):
-    doc = fitz.open(pdf_path)
-    text = ""
-    for page in doc:
-        text += page.get_text("text")
-    return text
+    try:
+        doc = fitz.open(pdf_path)
+        text = ""
+        for page in doc:
+            text += page.get_text("text")
+        return text
+    except Exception as e:
+        print(f"Error while reading PDF: {e}")
+        return None
 
 # Function to parse the extracted text and return structured data
 def parse_formulary(text):
     drugs = []
-    # Regex pattern to match drug name, admin instructions, and indications
-    pattern = r"(?P<drug_name>[\w\s]+)(?P<adm>Adm:.*?)(?P<indications>Indications:.*?)\n"
     
+    # Updated regex pattern to capture Drug Name, P/P, Admin instructions, Category, Indications
+    pattern = r"(?P<drug_name>[A-Za-z\s]+(?:\s(?:\(\w+\))?)?)\s*(?:\([^\)]+\))?\s*P/P:\s*(?P<pp>.*?)\s*Adm:\s*(?P<adm>.*?)(?=\nCategory:)(?P<category>.*?)\nIndications:\s*(?P<indications>.*?)\n"
+
     matches = re.finditer(pattern, text, re.DOTALL)
     
     for match in matches:
         drug_name = match.group("drug_name").strip()
-        adm = match.group("adm").strip().replace("Adm:", "").strip()
-        indications = match.group("indications").strip().replace("Indications:", "").strip()
-        drugs.append({"Drug Name": drug_name, "Adm": adm, "Indications": indications})
+        pp = match.group("pp").strip()
+        adm = match.group("adm").strip()
+        category = match.group("category").strip()
+        indications = match.group("indications").strip()
+        
+        drugs.append({
+            "Drug Name": drug_name,
+            "P/P": pp,
+            "Adm": adm,
+            "Category": category,
+            "Indications": indications
+        })
     
     return drugs
 
@@ -34,10 +49,27 @@ def save_to_csv(drugs_data, file_name):
 
 # Main function to extract and save data
 def main():
-    pdf_path = 'formulary.pdf'  # Replace with the actual path to your PDF file
+    # Check if the Formulary.pdf exists in the current directory
+    pdf_path = './Formulary.pdf'  # Assuming the PDF file is in the current directory
+
+    if not os.path.exists(pdf_path):
+        print(f"Error: The file '{pdf_path}' does not exist.")
+        return
+
+    # Extract text from the PDF
     pdf_text = extract_text_from_pdf(pdf_path)
-    drugs_data = parse_formulary(pdf_text)
-    save_to_csv(drugs_data, "formulary.csv")
+    
+    if pdf_text:
+        # Parse the text and get structured data
+        drugs_data = parse_formulary(pdf_text)
+        
+        if drugs_data:
+            # Save the parsed data to CSV
+            save_to_csv(drugs_data, "formulary.csv")
+        else:
+            print("No data parsed from the PDF.")
+    else:
+        print("Failed to extract text from the PDF.")
 
 if __name__ == "__main__":
     main()
