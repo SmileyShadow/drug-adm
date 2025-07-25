@@ -1,34 +1,41 @@
 import streamlit as st
 import pandas as pd
 
-# Load the data (formulary.csv) into the app
+# Function to load data from CSV
 def load_data():
     df = pd.read_csv('formulary.csv')
     return df
 
-# Display drug details
-def display_drug_info(drug_name, df):
-    drug_info = df[df['Drug Name'].str.contains(drug_name, case=False, na=False)]
+# Function to display drug details
+def display_drug_info(search_term, df):
+    # Search by either Generic Drug Name, Brand Name, or P/P (Pack/Presentation)
+    drug_info = df[df['Drug Name'].str.contains(search_term, case=False, na=False) | 
+                   df['P/P'].str.contains(search_term, case=False, na=False)]
+    
     if not drug_info.empty:
         for index, row in drug_info.iterrows():
-            st.subheader(f"Drug: {row['Drug Name']}")
+            st.subheader(f"Drug Name: {row['Drug Name']}")
+            st.write(f"**P/P**: {row['P/P']}")
+            st.write(f"**Adm**: {row['Adm']}")
+            st.write(f"**Category**: {row['Category']}")
             st.write(f"**Indications**: {row['Indications']}")
-            st.write(f"**Administration**: {row['Adm']}")
     else:
         st.error("No matching drug found!")
 
-# Main function
+# Main function for Streamlit app
 def main():
+    # Title of the app
     st.title("Drug Administration Guide")
-    st.markdown("Search for a drug to get key information about its administration and indications.")
+    st.markdown("Search for a drug by **Generic Name**, **Brand Name**, or **P/P (Pack/Presentation)** to get key information about its administration, category, and indications.")
     
-    df = load_data()  # Load the CSV file containing the drug data
+    # Load the CSV data
+    df = load_data()
     
-    # Search functionality
-    drug_name = st.text_input("Enter Drug Name:")
+    # Search input for drug name or P/P
+    search_term = st.text_input("Enter Generic Drug Name, Brand Name, or P/P (Pack/Presentation):")
     
-    if drug_name:
-        display_drug_info(drug_name, df)
+    if search_term:
+        display_drug_info(search_term, df)
 
 if __name__ == "__main__":
     main()
